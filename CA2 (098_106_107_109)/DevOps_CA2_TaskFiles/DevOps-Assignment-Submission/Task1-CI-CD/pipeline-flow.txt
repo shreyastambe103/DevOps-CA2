@@ -1,0 +1,13 @@
+CI/CD Pipeline Flow:
+====================
+
+1. Checkout → Git pulls from Gitea
+2. Verify Tools → Check Docker & kubectl
+3. Build Backend → docker build backend image
+4. Build Frontend → docker build frontend image  
+5. Push to Registry → Push to localhost:32000
+6. Update Manifests → Update K8s YAML with new tags
+7. Deploy to K8s → kubectl apply & rollout
+8. Verify → Check pods & services
+
+Tools: Jenkins, Docker, Kubernetes, Gitea
