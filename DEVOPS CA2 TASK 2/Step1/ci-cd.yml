@@ -1,0 +1,56 @@
+name: Deepfake App CI/CD Pipeline
+
+# Controls when the workflow is triggered
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Define the environment variables for your Docker image
+env:
+  # This uses the DOCKER_USERNAME secret defined in GitHub Settings
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/deepfake-detection-app
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- Continuous Integration (CI) Phase ---
+
+      - name: Set up Python 3.9 (More stable for complex libraries)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9' 
+      
+      - name: Basic Code Check (Simulated Testing)
+        run: |
+          echo "Running basic checks before containerization..."
+          python -m compileall .
+
+      # --- Continuous Deployment (CD) Phase ---
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }} # Uses your securely stored access token
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: . 
+          push: true
+          # Tag the image with 'latest' and the specific commit hash (for tracking)
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:latest
+            ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
