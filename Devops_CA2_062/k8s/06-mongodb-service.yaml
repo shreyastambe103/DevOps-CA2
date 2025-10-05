@@ -1,0 +1,20 @@
+# k8s/06-mongodb-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: recruitment-app
+  labels:
+    app: mongodb
+    tier: database
+spec:
+  type: ClusterIP  # Internal service - not exposed outside cluster
+  selector:
+    app: mongodb
+    tier: database
+  ports:
+    - name: mongo
+      protocol: TCP
+      port: 27017        # Service port
+      targetPort: 27017  # Container port
+  sessionAffinity: None
