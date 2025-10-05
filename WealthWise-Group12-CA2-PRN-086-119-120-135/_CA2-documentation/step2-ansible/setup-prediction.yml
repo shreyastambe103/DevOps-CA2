@@ -1,0 +1,49 @@
+---
+- name: Setup Predictions FastAPI backend environment
+  hosts: local
+  become: yes
+  vars:
+    backend_path: /mnt/d/Assignments/Devops-CA2-Group12/WealthWise-Group12-CA2-PRN-086-119-120-135/predictions
+    venv_path: "{{ backend_path }}/.venv"
+
+  tasks:
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install Python3, pip, and venv
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Create system user for FastAPI app
+      user:
+        name: fastapi_user
+        state: present
+        shell: /bin/bash
+
+    - name: Ensure backend directory exists
+      file:
+        path: "{{ backend_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Remove old virtual environment if exists
+      file:
+        path: "{{ venv_path }}"
+        state: absent
+
+    - name: Create virtual environment inside backend (copies, async-safe)
+      command: python3 -m venv --copies "{{ venv_path }}"
+      args:
+        creates: "{{ venv_path }}"
+
+    - name: Install Python requirements inside venv (async-safe)
+      pip:
+        requirements: "{{ backend_path }}/requirements.txt"
+        virtualenv: "{{ venv_path }}"
+        virtualenv_command: "{{ venv_path }}/bin/python3 -m venv --copies"
