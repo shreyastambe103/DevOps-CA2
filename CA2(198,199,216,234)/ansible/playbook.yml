@@ -1,0 +1,36 @@
+- name: Setup FlexiBook Backend Environment (Mac)
+  hosts: appservers
+  gather_facts: yes
+
+  tasks:
+    - name: Install packages via Homebrew
+      homebrew:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - node
+        - npm
+        - git
+        - docker
+      become: no   # important for Mac
+
+    - name: Create app directory
+      file:
+        path: /Users/skbiswal/flexibook
+        state: directory
+        owner: skbiswal
+        group: staff
+        mode: '0755'
+      become: no   # inside home folder, no sudo needed
+
+    - name: Copy backend config file
+      copy:
+        src: files/config.json
+        dest: /Users/skbiswal/flexibook/config.json
+        owner: skbiswal
+        group: staff
+        mode: '0644'
+      become: no
+
+
+
