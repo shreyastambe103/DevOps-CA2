@@ -1,0 +1,65 @@
+---
+- name: Setup WealthWise Frontend
+  hosts: local
+  become: yes
+  vars:
+    frontend_path: /mnt/d/Assignments/Devops-CA2-Group12/WealthWise-Group12-CA2-PRN-086-119-120-135/frontend
+    frontend_user: wealthwise
+
+  tasks:
+
+    # --- System setup ---
+    - name: Gather Facts
+      ansible.builtin.setup:
+
+    - name: Update apt packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - build-essential
+        state: present
+
+    # --- Ensure Node.js manually installed ---
+    - name: Check Node.js version
+      ansible.builtin.command: node -v
+      register: node_version
+      ignore_errors: yes
+
+    - name: Warn if Node.js < 20
+      ansible.builtin.debug:
+        msg: "Please install Node.js >= 20 manually in WSL before running the playbook!"
+      when: node_version.stdout is search("v1[0-9]|v2[0-1]")  # versions < 20
+
+    # --- User & directories ---
+    - name: Ensure frontend system user exists
+      ansible.builtin.user:
+        name: "{{ frontend_user }}"
+        state: present
+        shell: /bin/bash
+
+    - name: Ensure frontend directory exists
+      ansible.builtin.file:
+        path: "{{ frontend_path }}"
+        state: directory
+        owner: "{{ frontend_user }}"
+        mode: '0755'
+
+    # --- Frontend setup ---
+    - name: Install frontend dependencies (force)
+      ansible.builtin.shell: npm install --force
+      args:
+        chdir: "{{ frontend_path }}"
+      environment:
+        NODE_ENV: development
+
+    - name: Build frontend
+      ansible.builtin.shell: npm run build
+      args:
+        chdir: "{{ frontend_path }}"
+      environment:
+        NODE_ENV: production

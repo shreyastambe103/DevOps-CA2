@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wealthwise-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wealthwise-backend
+  template:
+    metadata:
+      labels:
+        app: wealthwise-backend
+    spec:
+      containers:
+      - name: backend
+        image: wealthwiseregistry.azurecr.io/wealthwise-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ENV_MODE
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: ENV_MODE
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: GOOGLE_CLIENT_ID
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: GOOGLE_CLIENT_SECRET
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: GOOGLE_API_KEY
+        - name: SITE_URL_DEV
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: SITE_URL_DEV
+        - name: FASTAPI_URL_DEV
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: FASTAPI_URL_DEV
+        - name: KITE_API_KEY_DEV
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: KITE_API_KEY_DEV
+        - name: KITE_API_SECRET_DEV
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: KITE_API_SECRET_DEV
+        - name: SITE_URL_PROD
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: SITE_URL_PROD
+        - name: FASTAPI_URL_PROD
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: FASTAPI_URL_PROD
+        - name: KITE_API_KEY_PROD
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: KITE_API_KEY_PROD
+        - name: KITE_API_SECRET_PROD
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: KITE_API_SECRET_PROD
+        - name: YOUTUBE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: YOUTUBE_API_KEY
+        - name: GOOGLE_SEARCH_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: GOOGLE_SEARCH_API_KEY
+        - name: GOOGLE_CSE_ID
+          valueFrom:
+            secretKeyRef:
+              name: wealthwise-secrets
+              key: GOOGLE_CSE_ID

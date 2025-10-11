@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quickcv-frontend
+spec:
+  replicas: 2 # kustomize can patch this
+  selector:
+    matchLabels:
+      app: quickcv-frontend
+  template:
+    metadata:
+      labels:
+        app: quickcv-frontend
+    spec:
+      containers:
+      - name: quickcv-frontend
+        image: localhost:32000/quickcv-hrwebapp:latest
+        ports:
+          - containerPort: 80
