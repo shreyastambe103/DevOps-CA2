@@ -1,0 +1,47 @@
+# ai_services4/resume-analyzer/.dockerignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Test files
+test-files/
+uploads/
+*.pdf
+
+# Package files
+*.egg-info/
+dist/
+build/
