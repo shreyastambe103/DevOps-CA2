@@ -1,0 +1,38 @@
+---
+- name: Setup Django backend environment
+  hosts: local
+  become: yes
+  tasks:
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install Python3, pip, and venv module
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Create system user for Django app
+      user:
+        name: wealthwise
+        state: present
+        shell: /bin/bash
+
+    - name: Ensure backend directory exists
+      file:
+        path: /mnt/d/Assignments/Devops-CA2-Group12/WealthWise-Group12-CA2-PRN-086-119-120-135/backend
+        state: directory
+        mode: '0755'
+
+    - name: Create virtual environment inside backend
+      command: python3 -m venv /mnt/d/Assignments/Devops-CA2-Group12/WealthWise-Group12-CA2-PRN-086-119-120-135/backend/.venv
+      args:
+        creates: /mnt/d/Assignments/Devops-CA2-Group12/WealthWise-Group12-CA2-PRN-086-119-120-135/backend/.venv
+
+    - name: Install Python requirements inside virtual environment
+      pip:
+        requirements: /mnt/d/Assignments/Devops-CA2-Group12/WealthWise-Group12-CA2-PRN-086-119-120-135/backend/requirements.txt
+        virtualenv: /mnt/d/Assignments/Devops-CA2-Group12/WealthWise-Group12-CA2-PRN-086-119-120-135/backend/.venv
