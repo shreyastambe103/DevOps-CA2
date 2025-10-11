@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quickcv-backend
+spec:
+  replicas: 2 # kustomize can patch this
+  selector:
+    matchLabels:
+      app: quickcv-backend
+  template:
+    metadata:
+      labels:
+        app: quickcv-backend
+    spec:
+      containers:
+      - name: quickcv-backend
+        image: localhost:32000/quickcv-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: quickcv-data
+          mountPath: /app/data  # This is where files will be stored inside the container
+      volumes:
+      - name: quickcv-data
+        persistentVolumeClaim:
+          claimName: quickcv-storage

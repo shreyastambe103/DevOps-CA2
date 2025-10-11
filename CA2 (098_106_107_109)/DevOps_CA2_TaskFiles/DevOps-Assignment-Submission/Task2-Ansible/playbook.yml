@@ -1,0 +1,74 @@
+---
+- name: QuickCV User-Level Setup
+  hosts: quickcv_servers
+  become: no
+  gather_facts: no
+  
+  vars:
+    app_user: manan
+    app_dir: /home/manan/quickcv-app
+
+  tasks:
+    - name: Display info
+      debug:
+        msg: "Setting up QuickCV environment for {{ app_user }}"
+
+    - name: Install Python packages (system-wide safe)
+      pip:
+        name:
+          - fastapi
+          - uvicorn
+          - pandas
+          - openpyxl
+          - python-multipart
+          - pytest
+          - httpx
+        state: present
+        executable: pip3
+        extra_args: --break-system-packages
+
+    - name: Create app directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create subdirectories
+      file:
+        path: "{{ app_dir }}/{{ item }}"
+        state: directory
+        mode: '0775'
+      loop:
+        - data
+        - logs
+        - uploads
+        - backups
+
+    - name: Check Docker access
+      command: docker ps
+      register: docker_check
+      ignore_errors: yes
+
+    - name: Create sample config file
+      copy:
+        content: |
+          # QuickCV Configuration
+          APP_NAME=QuickCV
+          BACKEND_PORT=8000
+          FRONTEND_PORT=3000
+          DATA_DIR={{ app_dir }}/data
+        dest: "{{ app_dir }}/config.env"
+        mode: '0644'
+
+    - name: Display summary
+      debug:
+        msg:
+          - "=========================================="
+          - "✓ QuickCV Environment Setup Complete!"
+          - "=========================================="
+          - "✓ Python packages installed"
+          - "✓ App directory: {{ app_dir }}"
+          - "✓ Subdirectories: data, logs, uploads, backups"
+          - "✓ Config file: {{ app_dir }}/config.env"
+          - "✓ Docker status: {{ 'accessible' if docker_check.rc == 0 else 'needs permissions' }}"
+          - "=========================================="

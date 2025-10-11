@@ -1,0 +1,157 @@
+pipeline {
+    agent any
+    
+    environment {
+        PATH = "/var/jenkins_home/bin:${env.PATH}"
+        REGISTRY = 'localhost:32000'
+        BACKEND_IMAGE = "${REGISTRY}/quickcv-backend"
+        FRONTEND_IMAGE = "${REGISTRY}/quickcv-hrwebapp"
+        BUILD_TAG = "${BUILD_NUMBER}"
+        NAMESPACE = 'quickcv'
+        KUBECONFIG = '/var/jenkins_home/.kube/config'
+    }
+    
+    stages {
+        stage('Verify Tools') {
+            steps {
+                echo '=== Verifying Build Tools ==='
+                sh '''
+                    /var/jenkins_home/bin/docker --version
+                    /var/jenkins_home/bin/kubectl version --client
+                    echo "✓ Docker and kubectl verified"
+                '''
+            }
+        }
+        
+        stage('Checkout') {
+            steps {
+                echo '=== Checking out source code ==='
+                checkout scm
+                sh 'ls -la'
+            }
+        }
+        
+        stage('Build Backend') {
+            steps {
+                echo '=== Building Backend Docker Image ==='
+                dir('backend') {
+                    sh """
+                        /var/jenkins_home/bin/docker build -t ${BACKEND_IMAGE}:${BUILD_TAG} .
+                        /var/jenkins_home/bin/docker tag ${BACKEND_IMAGE}:${BUILD_TAG} ${BACKEND_IMAGE}:latest
+                        echo "✓ Backend image built: ${BACKEND_IMAGE}:${BUILD_TAG}"
+                    """
+                }
+            }
+        }
+        
+        stage('Build Frontend') {
+            steps {
+                echo '=== Building Frontend Docker Image ==='
+                dir('HRwebapp') {
+                    sh """
+                        /var/jenkins_home/bin/docker build -t ${FRONTEND_IMAGE}:${BUILD_TAG} .
+                        /var/jenkins_home/bin/docker tag ${FRONTEND_IMAGE}:${BUILD_TAG} ${FRONTEND_IMAGE}:latest
+                        echo "✓ Frontend image built: ${FRONTEND_IMAGE}:${BUILD_TAG}"
+                    """
+                }
+            }
+        }
+        
+        stage('Push to Registry') {
+            steps {
+                echo '=== Pushing Images to Registry ==='
+                sh """
+                    /var/jenkins_home/bin/docker push ${BACKEND_IMAGE}:${BUILD_TAG}
+                    /var/jenkins_home/bin/docker push ${BACKEND_IMAGE}:latest
+                    echo "✓ Backend pushed"
+                    
+                    /var/jenkins_home/bin/docker push ${FRONTEND_IMAGE}:${BUILD_TAG}
+                    /var/jenkins_home/bin/docker push ${FRONTEND_IMAGE}:latest
+                    echo "✓ Frontend pushed"
+                    
+                    echo "✓ All images pushed to registry successfully"
+                """
+            }
+        }
+        
+        stage('Update Manifests') {
+            steps {
+                echo '=== Updating Kubernetes Manifests ==='
+                sh """
+                    sed -i 's|image:.*quickcv-backend.*|image: ${BACKEND_IMAGE}:${BUILD_TAG}|g' Kubernetes/backend-deployment.yaml
+                    sed -i 's|image:.*quickcv-hrwebapp.*|image: ${FRONTEND_IMAGE}:${BUILD_TAG}|g' Kubernetes/frontend-deployment.yaml
+                    
+                    echo "Updated image tags:"
+                    grep "image:" Kubernetes/backend-deployment.yaml
+                    grep "image:" Kubernetes/frontend-deployment.yaml
+                    echo "✓ Manifests updated"
+                """
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo '=== Deploying to Kubernetes ==='
+                sh """
+                    /var/jenkins_home/bin/kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | /var/jenkins_home/bin/kubectl apply -f -
+                    
+                    /var/jenkins_home/bin/kubectl apply -f Kubernetes/quickcv-storage-pvc.yaml
+                    /var/jenkins_home/bin/kubectl apply -f Kubernetes/backend-deployment.yaml
+                    /var/jenkins_home/bin/kubectl apply -f Kubernetes/backend-service.yaml
+                    /var/jenkins_home/bin/kubectl apply -f Kubernetes/frontend-deployment.yaml
+                    /var/jenkins_home/bin/kubectl apply -f Kubernetes/frontend-service.yaml
+                    
+                    echo "Waiting for deployments to be ready..."
+                    /var/jenkins_home/bin/kubectl rollout status deployment/quickcv-backend -n ${NAMESPACE} --timeout=5m
+                    /var/jenkins_home/bin/kubectl rollout status deployment/quickcv-frontend -n ${NAMESPACE} --timeout=5m
+                    
+                    echo "✓ Deployment complete"
+                """
+            }
+        }
+        
+        stage('Verify Deployment') {
+            steps {
+                echo '=== Verifying Deployment ==='
+                sh """
+                    echo "=== Pods ==="
+                    /var/jenkins_home/bin/kubectl get pods -n ${NAMESPACE}
+                    
+                    echo ""
+                    echo "=== Services ==="
+                    /var/jenkins_home/bin/kubectl get svc -n ${NAMESPACE}
+                    
+                    echo ""
+                    echo "=== Deployments ==="
+                    /var/jenkins_home/bin/kubectl get deployments -n ${NAMESPACE}
+                    
+                    echo "✓ Verification complete"
+                """
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '===================================================='
+            echo '✓✓✓ BUILD SUCCESS ✓✓✓'
+            echo '===================================================='
+            echo "Build Number: ${BUILD_NUMBER}"
+            echo "Backend: ${BACKEND_IMAGE}:${BUILD_TAG}"
+            echo "Frontend: ${FRONTEND_IMAGE}:${BUILD_TAG}"
+            echo "Namespace: ${NAMESPACE}"
+            echo '===================================================='
+            echo 'QuickCV deployed successfully to Kubernetes!'
+            echo '===================================================='
+        }
+        failure {
+            echo '===================================================='
+            echo '✗✗✗ BUILD FAILED ✗✗✗'
+            echo '===================================================='
+            echo 'Check the logs above for error details'
+        }
+        always {
+            echo 'Pipeline execution complete'
+        }
+    }
+}
