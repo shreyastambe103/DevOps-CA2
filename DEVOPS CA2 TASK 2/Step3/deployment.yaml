@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deepfake-deployment
+  labels:
+    app: deepfake-app
+spec:
+  replicas: 2 # Start with 2 instances (pods)
+  selector:
+    matchLabels:
+      app: deepfake-app
+  template:
+    metadata:
+      labels:
+        app: deepfake-app
+    spec:
+      containers:
+      - name: deepfake-container
+        image: yourusername/deepfake-app:v1.0 # << IMPORTANT: Use your pushed image tag
+        ports:
+        - containerPort: 5000
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
