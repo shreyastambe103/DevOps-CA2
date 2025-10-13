@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flexibook-frontend
+  labels:
+    app: flexibook-frontend
+spec:
+  replicas: 2   # you can scale this up/down
+  selector:
+    matchLabels:
+      app: flexibook-frontend
+  template:
+    metadata:
+      labels:
+        app: flexibook-frontend
+    spec:
+      containers:
+        - name: flexibook-frontend
+          image: flexibook-frontend:latest   # replace with your image in DockerHub/GHCR later
+          ports:
+            - containerPort: 80
+
+

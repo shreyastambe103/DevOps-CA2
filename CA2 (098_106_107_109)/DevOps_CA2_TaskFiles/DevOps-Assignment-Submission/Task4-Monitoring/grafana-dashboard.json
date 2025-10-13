@@ -1,0 +1,19 @@
+{
+  "dashboard": {
+    "title": "QuickCV Monitoring",
+    "panels": [
+      {
+        "title": "Application Uptime",
+        "type": "graph"
+      },
+      {
+        "title": "Request Latency",
+        "type": "graph"
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph"
+      }
+    ]
+  }
+}

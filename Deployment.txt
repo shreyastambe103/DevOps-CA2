@@ -1,0 +1,17 @@
+----THESE FILES ARE CHANGED FOR DEPLOYMENT AND DOCKER PURPOSE----
+vite.config.js
+src/api.js
+
+server/server.js
+server/.env
+
+----MULTI-CONTAINER (WITH AND WITHOUT NGINX)----
+backend.Dockerfile
+frontend.Dockerfile
+frontendnginx.Dockerfile
+docker-compose.yaml
+
+----FOR SINGLE DOCKER CONTAINER----
+Dockerfile
+docker-compose-single-container.yaml    --> Should be renamed to docker-compose.yaml if you want to use this
+package-single-container.json           --> Should be renamed to package.json if you want to use this

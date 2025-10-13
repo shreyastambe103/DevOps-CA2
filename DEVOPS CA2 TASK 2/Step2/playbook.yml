@@ -1,0 +1,43 @@
+---
+- name: Configure Deepfake Detection Runtime Environment
+  hosts: web_servers
+  become: yes # Use 'sudo' for administrative tasks
+  tasks:
+    - name: Ensure Python and pip are installed
+      ansible.builtin.apt:
+        name: 
+          - python3
+          - python3-pip
+          - git
+        state: present
+        update_cache: yes # Update apt cache before installing
+
+    - name: Create a dedicated user for the application
+      ansible.builtin.user:
+        name: deepfake_user
+        shell: /bin/bash
+        state: present
+
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: /opt/deepfake_app
+        state: directory
+        owner: deepfake_user
+        group: deepfake_user
+        mode: '0755'
+
+    - name: Clone the deepfake repository
+      ansible.builtin.git:
+        repo: https://github.com/Spandan7724/deepfake_detection_webapp.git
+        dest: /opt/deepfake_app/source
+        version: main # The branch to clone
+        force: yes
+
+    - name: Install Python dependencies from requirements.txt
+      ansible.builtin.pip:
+        requirements: /opt/deepfake_app/source/requirements.txt
+        virtualenv: /opt/deepfake_app/venv # Install in a virtual environment (best practice)
+        virtualenv_command: /usr/bin/python3 -m venv
+        state: present
+      become: no # Run this task as the 'deepfake_user' (not root)
+      become_user: deepfake_user

@@ -1,0 +1,43 @@
+name: AKS Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Login to Azure
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Login to ACR
+      - name: Login to ACR
+        run: az acr login --name wealthwiseregistry
+
+      # Set AKS context
+      - name: Set AKS context
+        run: az aks get-credentials --resource-group devopsca2 --name wealthwise-cluster
+
+      # Build Docker image with 'latest' tag
+      - name: Build Docker image
+        run: docker build -t wealthwiseregistry.azurecr.io/wealthwise-backend:latest ./WealthWise-Group12-CA2-PRN-086-119-120-135/backend
+
+      # Push Docker image to ACR
+      - name: Push Docker image
+        run: docker push wealthwiseregistry.azurecr.io/wealthwise-backend:latest
+
+      # Apply deployment (uses 'latest' image)
+      - name: Apply deployment
+        run: |
+          kubectl apply -f ./WealthWise-Group12-CA2-PRN-086-119-120-135/backend/k8s/deployment.yaml
+          kubectl rollout status deployment/wealthwise-backend
